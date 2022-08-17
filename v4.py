@@ -2,6 +2,7 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from translate import Translator
 import logging as log
 import speech_recognition as sr
+import os
 
 def start(update, context):
     log.info(f' User "{update.message.from_user.id}" used command /start')
@@ -76,9 +77,13 @@ def fast_translate(update, context):
 
 def speech_translate(update, context):
     log.info(f' User "{update.message.from_user.id}" translating speech')
+    file_name = f'voice_messages/{update.message.voice.file_id}.mp3'
+    update.message.voice.get_file().download(file_name)
     r = sr.Recognizer()
-    #print(r.recognize_sphinx(update.message.voice))
-    print(update.message.voice)
+    with sr.AudioFile(file_name) as source:
+        audio = r.record(source)
+    print(r.recognize_sphinx(audio))
+    os.remove(file_name)
 
 
 def launch_bot():
