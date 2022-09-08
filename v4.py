@@ -3,6 +3,7 @@ from translate import Translator
 import logging as log
 import speech_recognition as sr
 import os
+from gtts import gTTS
 
 def start(update, context):
     log.info(f' User "{update.message.from_user.id}" used command /start')
@@ -31,7 +32,7 @@ def echo(update, context):
     context.bot.send_message(update.message.chat_id, ' '.join(context.args))
 
 
-def create_translator(context):
+def get_translator(context):
     if not context.user_data.get('from'):
         context.user_data['from'] = 'autodetect'
     if not context.user_data.get('to'):
@@ -40,7 +41,7 @@ def create_translator(context):
 
 
 def translate(update, context):
-    translator = create_translator(context)
+    translator = get_translator(context)
     log.info(f' User "{update.message.from_user.id}" used command /translate sending "{" ".join(context.args)}"'
              f' from "{context.user_data.get("from")}" to "{context.user_data.get("to")}"')
     context.bot.send_message(update.message.chat_id, translator.translate(' '.join(context.args)))
@@ -69,7 +70,7 @@ def fastmode(update, context):
 
 def fast_translate(update, context):
     if context.user_data.get('fastmode'):
-        translator = create_translator(context)
+        translator = get_translator(context)
         log.info(f' User "{update.message.from_user.id}" on fast mode translating "{update.message.text}"'
                  f' from "{context.user_data.get("from")}" to "{context.user_data.get("to")}"')
         context.bot.send_message(update.message.chat_id, translator.translate(update.message.text))
@@ -77,13 +78,24 @@ def fast_translate(update, context):
 
 def speech_translate(update, context):
     log.info(f' User "{update.message.from_user.id}" translating speech')
-    file_name = f'voice_messages/{update.message.voice.file_id}.mp3'
+    file_name = f'voice_messages/{update.message.voice.file_id}.ogg'
     update.message.voice.get_file().download(file_name)
     r = sr.Recognizer()
     with sr.AudioFile(file_name) as source:
         audio = r.record(source)
     print(r.recognize_sphinx(audio))
     os.remove(file_name)
+
+
+def toaudio(update, context):
+    log.info(f' User "{update.message.from_user.id}" used command /toaudio sending "{" ".join(context.args)}"'
+             f' from "{context.user_data.get("from")}" to "{context.user_data.get("to")}"')
+
+    translator = get_translator(context)
+    myobj = gTTS(text=translator.translate(' '.join(context.args)), lang=context.user_data.get("to"), slow=False)
+    myobj.save('voice_messages/translation.mp3')
+    context.bot.send_audio(chat_id=update.message.chat_id, audio=open('voice_messages/translation.mp3', 'rb'))
+    os.remove('voice_messages/translation.mp3')
 
 
 def launch_bot():
@@ -98,6 +110,7 @@ def launch_bot():
     dispatcher.add_handler(CommandHandler('fromlanguage', fromlanguage))
     dispatcher.add_handler(CommandHandler('tolanguage', tolanguage))
     dispatcher.add_handler(CommandHandler('fastmode', fastmode))
+    dispatcher.add_handler(CommandHandler('toaudio', toaudio))
     dispatcher.add_handler(MessageHandler(Filters.voice, speech_translate))
     dispatcher.add_handler(MessageHandler(Filters.text, fast_translate))
     # Starts the bot
