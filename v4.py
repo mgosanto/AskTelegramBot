@@ -1,9 +1,11 @@
+from sys import orig_argv
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from translate import Translator
 import logging as log
 import speech_recognition as sr
 import os
 from gtts import gTTS
+from pydub import AudioSegment
 
 def start(update, context):
     log.info(f' User "{update.message.from_user.id}" used command /start')
@@ -48,13 +50,19 @@ def translate(update, context):
 
 
 def fromlanguage(update, context):
-    log.info(f' User "{update.message.from_user.id}" used command /fromlanguage sending "{context.args[0]}"')
+    log.info(f' User "{update.message.from_user.id}" used command /fromlanguage sending "{context.args}"')
+    if not context.args:
+        context.bot.send_message(update.message.chat_id, f'From language is set to "{context.user_data.get("from")}"')
+        return
     context.user_data['from'] = context.args[0]
     context.bot.send_message(update.message.chat_id, 'Language updated.')
 
 
 def tolanguage(update, context):
-    log.info(f' User "{update.message.from_user.id}" used command /tolanguage sending "{context.args[0]}"')
+    log.info(f' User "{update.message.from_user.id}" used command /tolanguage sending "{context.args}"')
+    if not context.args:
+        context.bot.send_message(update.message.chat_id, f'From language is set to "{context.user_data.get("from")}"')
+        return
     context.user_data['to'] = context.args[0]
     context.bot.send_message(update.message.chat_id, 'Language updated.')
 
@@ -77,14 +85,35 @@ def fast_translate(update, context):
 
 
 def speech_translate(update, context):
-    log.info(f' User "{update.message.from_user.id}" translating speech')
-    file_name = f'voice_messages/{update.message.voice.file_id}.ogg'
-    update.message.voice.get_file().download(file_name)
+    file_name = f'voice_messages/{update.message.voice.file_id}'
+    fromlanguage = context.user_data.get('from')
+    log.info(f' User "{update.message.from_user.id}" translating speech on file "{file_name}" from language "{fromlanguage}"')
+
+    translator = get_translator(context)
+    if not fromlanguage or fromlanguage == 'autodetect':
+        context.bot.send_message(update.message.chat_id, 'Select a specific language using /fromlanguage')
+        return
+
+    ogg = file_name + '.ogg'
+    wav = file_name + '.wav'
+    update.message.voice.get_file().download(ogg)
+    sound = AudioSegment.from_ogg(ogg)
+    sound.export(wav, format='wav')
     r = sr.Recognizer()
-    with sr.AudioFile(file_name) as source:
+    with sr.AudioFile(wav) as source:
         audio = r.record(source)
-    print(r.recognize_sphinx(audio))
-    os.remove(file_name)
+    os.remove(ogg)
+    os.remove(wav)
+
+    recognized_text = r.recognize_google(audio, language=context.user_data.get('from'))
+    context.bot.send_message(update.message.chat_id, 'You said: ' + recognized_text)
+    
+    translated_text = translator.translate(recognized_text)
+
+    gtts = gTTS(text=translated_text, lang=context.user_data.get("to"), slow=False)
+    gtts.save('voice_messages/translation.mp3')
+    context.bot.send_audio(chat_id=update.message.chat_id, audio=open('voice_messages/translation.mp3', 'rb'))
+    os.remove('voice_messages/translation.mp3')
 
 
 def toaudio(update, context):
@@ -92,8 +121,8 @@ def toaudio(update, context):
              f' from "{context.user_data.get("from")}" to "{context.user_data.get("to")}"')
 
     translator = get_translator(context)
-    myobj = gTTS(text=translator.translate(' '.join(context.args)), lang=context.user_data.get("to"), slow=False)
-    myobj.save('voice_messages/translation.mp3')
+    gtts = gTTS(text=translator.translate(' '.join(context.args)), lang=context.user_data.get("to"), slow=False)
+    gtts.save('voice_messages/translation.mp3')
     context.bot.send_audio(chat_id=update.message.chat_id, audio=open('voice_messages/translation.mp3', 'rb'))
     os.remove('voice_messages/translation.mp3')
 
