@@ -1,5 +1,6 @@
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from translate import Translator
+import os
 
 
 def start(update, context):
@@ -57,7 +58,7 @@ def fastmode(update, context):
 
 
 def launch_bot():
-    token = "5488564209:AAFpF8k5RzvPQi45mwdN6tpdgVuXJ97SlC4"
+    token = os.environ['TOKEN']
     updater = Updater(token, use_context=True)
     dispatcher = updater.dispatcher
 
