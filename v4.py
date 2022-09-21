@@ -61,7 +61,7 @@ def fromlanguage(update, context):
 def tolanguage(update, context):
     log.info(f' User "{update.message.from_user.id}" used command /tolanguage sending "{context.args}"')
     if not context.args:
-        context.bot.send_message(update.message.chat_id, f'From language is set to "{context.user_data.get("from")}"')
+        context.bot.send_message(update.message.chat_id, f'To language is set to "{context.user_data.get("to")}"')
         return
     context.user_data['to'] = context.args[0]
     context.bot.send_message(update.message.chat_id, 'Language updated.')
