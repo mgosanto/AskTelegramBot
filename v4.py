@@ -1,4 +1,3 @@
-from sys import orig_argv
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from translate import Translator
 import logging as log
@@ -6,6 +5,8 @@ import speech_recognition as sr
 import os
 from gtts import gTTS
 from pydub import AudioSegment
+import uvicorn
+from fastapi import FastAPI
 
 def start(update, context):
     log.info(f' User "{update.message.from_user.id}" used command /start')
@@ -25,7 +26,9 @@ def _help(update, context):
           '/translate {sentence} - Translates the given sentence\n\n' \
           '/fromlanguage {language} - Updates the language which /translate will read. Language must be given in IETF language tag format or "autodetect" (accuracy decreases)\n\n' \
           '/tolanguage {language} - Updates the language /translate will return. Language must be given in IETF language tag format\n\n' \
-          '/fastmode - Activates/Deactivates fast mode, which allows the bot to translate every message you send without using /translate.'
+          '/fastmode - Activates/Deactivates fast mode, which allows the bot to translate every message you send without using /translate\n\n' \
+          '/toaudio {sentence} - Translates any given sentence and returns it as an audio'
+
     context.bot.send_message(update.message.chat_id, msg)
 
 
@@ -128,7 +131,7 @@ def toaudio(update, context):
 
 
 def launch_bot():
-    token = os.environ['TOKEN']
+    token = "5488564209:AAFpF8k5RzvPQi45mwdN6tpdgVuXJ97SlC4"
     updater = Updater(token, use_context=True)
     dispatcher = updater.dispatcher
 
@@ -149,6 +152,14 @@ def launch_bot():
     updater.idle()
 
 
-if __name__ == '__main__':
+app = FastAPI()
+
+
+@app.get("/")
+def index():
     log.basicConfig(level=log.INFO)
     launch_bot()
+
+
+if __name__ == '__main__':
+    uvicorn.run("v4:app", port=8000, reload=True)
