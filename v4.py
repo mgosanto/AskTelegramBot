@@ -11,7 +11,8 @@ from fastapi import FastAPI
 def start(update, context):
     log.info(f' User "{update.message.from_user.id}" used command /start')
     msg = f'Hello, {update.message.from_user.first_name}.\n\n' \
-          f'Default translation autodetects written language and translates it to english, you can change it for a more precise translation by using the command /fromlanguage and /tolanguage respectively.\n\n' \
+          f'Default translation using /translate autodetects written language and translates it to english, you can change it for a more precise translation by using the command /fromlanguage and /tolanguage respectively.\n\n' \
+          f'You can also send a voice message to receive the translation once you have set /fromlanguage.\n\n' \
           f'To receive the complete command list write /help.'
     context.bot.send_message(update.message.chat_id, msg)
 
@@ -92,10 +93,10 @@ def speech_translate(update, context):
     fromlanguage = context.user_data.get('from')
     log.info(f' User "{update.message.from_user.id}" translating speech on file "{file_name}" from language "{fromlanguage}"')
 
-    translator = get_translator(context)
     if not fromlanguage or fromlanguage == 'autodetect':
         context.bot.send_message(update.message.chat_id, 'Select a specific language using /fromlanguage')
         return
+    translator = get_translator(context)
 
     ogg = file_name + '.ogg'
     wav = file_name + '.wav'
@@ -131,6 +132,7 @@ def toaudio(update, context):
 
 
 def launch_bot():
+# Acceder a través de variable de entorno por seguridad (getenv)    
     token = "5488564209:AAFpF8k5RzvPQi45mwdN6tpdgVuXJ97SlC4"
     updater = Updater(token, use_context=True)
     dispatcher = updater.dispatcher
