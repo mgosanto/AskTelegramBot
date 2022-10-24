@@ -19,7 +19,8 @@ def start(update, context):
 
 def _help(update, context):
     log.info(f' User "{update.message.from_user.id}" used command /help')
-    msg = 'BASIC COMMANDS\n\n' \
+    msg = 'For translating a voice message, select your language using /fromlanguage and send the voice message. \n\n' \
+          'BASIC COMMANDS\n\n' \
           '/start - Receive the welcome message\n' \
           '/help - Returns list of every AskTelegramBot command\n' \
           '/echo {sentence} - Returns the given sentence\n\n' \
@@ -96,7 +97,6 @@ def speech_translate(update, context):
     if not fromlanguage or fromlanguage == 'autodetect':
         context.bot.send_message(update.message.chat_id, 'Select a specific language using /fromlanguage')
         return
-    translator = get_translator(context)
 
     ogg = file_name + '.ogg'
     wav = file_name + '.wav'
@@ -112,6 +112,7 @@ def speech_translate(update, context):
     recognized_text = r.recognize_google(audio, language=context.user_data.get('from'))
     context.bot.send_message(update.message.chat_id, 'You said: ' + recognized_text)
     
+    translator = get_translator(context)
     translated_text = translator.translate(recognized_text)
 
     gtts = gTTS(text=translated_text, lang=context.user_data.get("to"), slow=False)
@@ -132,8 +133,7 @@ def toaudio(update, context):
 
 
 def launch_bot():
-# Acceder a través de variable de entorno por seguridad (getenv)    
-    token = "5488564209:AAFpF8k5RzvPQi45mwdN6tpdgVuXJ97SlC4"
+    token = os.getenv('TOKEN')
     updater = Updater(token, use_context=True)
     dispatcher = updater.dispatcher
 
