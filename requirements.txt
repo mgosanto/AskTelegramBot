@@ -1,51 +1,29 @@
-# Make sure to install those as additional_dependencies in the
-# pre-commit hooks for pylint & mypy
-# Also update the readme accordingly
-
-# When dependencies release new versions and tests succeed, we should try to expand the allowed
-# versions and only increase the lower bound if necessary
-
-# httpx has no stable release yet, so let's be cautious for now
 httpx ~= 0.23.0
-# only telegram.ext: # Keep this line here; used in setup(-raw).py
-
-# tornado is rather stable, but let's not allow the next mayor release without prior testing
 tornado~=6.1
-# Para 20.0.a4
-#tornado~=6.2
-
-# Cachetools and APS don't have a strict stability policy.
-# Let's be cautious for now.
 cachetools~=4.2.2
-# Para 20.0.a4
-#cachetools~=5.2.0
 APScheduler~=3.6.3
-# Para 20.0.a4
-#APScheduler~=3.9.1
-
-# pytz is required by APS and just needs the lower bound due to #2120
 pytz>=2018.6
 
-# python-telegram-bot
+# Telegram BOT API wrapper
 python-telegram-bot~=13.14
 
-# translate
+# translation
 translate~=3.6.1
 
-# gTTS
+# text-to-speech
 gTTS ~= 2.2.4
 
-# fastapi
+# API creation
 fastapi ~= 0.85.0
 
-# pydub
+# audio formatter
 pydub ~= 0.25.1
 
-# SpeechRecognition
+# speech-to-text
 SpeechRecognition ~= 3.8.1
 
-# uvicorn
+# fastapi dependency
 uvicorn ~= 0.18.3
 
-# wheel
+# instalation dependency
 wheel ~= 0.37.1
